@@ -1,0 +1,3 @@
+Ques1: 3/3 test cases passed.
+Ques2: 3/3 test cases passed.
+Ques3: 3/3 test cases passed.
