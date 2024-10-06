@@ -134,20 +134,24 @@ def generate_excel_report(users_results):
     sheet.title = "Test Results"
 
     # Headers
-    headers = ["Name", "Ques1", "Ques2", "Ques3", "Total Marks"]
+    ques_list = os.listdir(questions_path)
+    headers = ["Name"] + ques_list + ["Total Marks"]
     sheet.append(headers)
 
     for row, (user, results) in enumerate(users_results.items(), start=2):
         total_marks = 0
         row_data = [user]
-        for question in ["Ques1", "Ques2", "Ques3"]:
+        for question in ques_list:
             result = results.get(question, {"passed": 0, "total": 0})
             passed, total = result["passed"], result["total"]
-            if passed == total:
-                row_data.append("Pass")
-                total_marks += marks_per_question
-            else:
-                row_data.append("Fail")
+
+            row_data.append(str(passed * 100 / total) + "%")
+            total_marks += (passed / total) * marks_per_question
+            # if passed == total:
+            #     # row_data.append("Pass")
+            #     total_marks += marks_per_question
+            # else:
+            #     row_data.append("Fail")
         row_data.append(total_marks)
         sheet.append(row_data)
 
@@ -172,7 +176,9 @@ def main():
 
 
 def temp():
-    user_folder = "Darshan_Padia_65 "
+    # ques_list = os.listdir(questions_path)
+    # headers = ["Name"] + ques_list + ["Total Marks"]
+    # user_folder = "Darshan_Padia_65 "
     # user_path = os.path.join(submissions_path, user_folder)
     # nameAsList = user_folder.lower().split("_")
 
@@ -188,6 +194,9 @@ def temp():
     # code_file = os.path.join(user_path, nameOfFile)
     # output = run_code(code_file, input_file)
     # print(output)
+    m1 = {1: "one", 2: "two", 3: "three"}
+    for i, (word, string_word) in enumerate(m1.items(), start=2):
+        print(i, word, string_word)
 
 
 if __name__ == "__main__":
