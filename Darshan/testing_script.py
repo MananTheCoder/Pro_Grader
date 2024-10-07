@@ -78,11 +78,14 @@ def evaluate_user(user_folder):
         for i, (input_file, expected_output_file) in enumerate(test_cases):
             # Derive the code file based on user folder and question
             nameAsList = user_folder.lower().split("_")
+            
+            questionNumList = [i for i in question if(ord(i) >= ord('0') and ord(i) <= ord('9')) ]
+            questionNum = ''.join(questionNumList)
+            # print(questionNum)
             nameOfFile = (
-                nameAsList[0][0] + "_" + nameAsList[1][0] + "_" + question[-1] + ".cpp"
+                nameAsList[0][0] + "_" + nameAsList[1][0] + "_" + questionNum + ".cpp"
             )
-            if nameOfFile[0] == "m":
-                continue
+
             code_file = os.path.join(user_path, nameOfFile)
 
             if os.path.exists(code_file):
