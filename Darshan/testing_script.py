@@ -8,7 +8,12 @@ base_path = "./"
 questions_path = os.path.join(base_path, "Questions")
 submissions_path = os.path.join(base_path, "Submissions")
 results_path = os.path.join(base_path, "Results")
-marks_per_question = 4
+# Define marks for each question here. Adjust as necessary.
+marks_per_question = {
+    "Ques1": 5,
+    "Ques2": 3,
+    "Ques3": 4,
+}
 
 green_fill = PatternFill(start_color="00FF00", end_color="00FF00", fill_type="solid")
 red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
@@ -143,7 +148,8 @@ def generate_excel_report(users_results):
             for question in ques_list:
                 result = results.get(question, {"passed": 0, "total": 0})
                 passed, total = result["passed"], result["total"]
-                score = (passed / total) * marks_per_question if total else 0
+                question_marks = marks_per_question.get(question, 0)
+                score = (passed / total) * question_marks if total else 0
                 row_data.append(f"{(passed / total) * 100:.1f}%" if total else "0%")
                 total_marks += score
             row_data.append(total_marks)
