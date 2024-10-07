@@ -3,12 +3,12 @@
 using namespace std;
 
 int main(){
-    int n;
-    cin>>n;
-    if(n&1){
-        cout<<"NO";
-    }else{
-        cout<<"YES";
+    int t;
+    cin>>t;
+    while(t--){
+        int n;
+        cin>>n;
+        (n&1)?cout<<"NO\n":cout<<"YES\n";
     }
     return 0;
 }
