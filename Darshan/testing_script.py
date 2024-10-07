@@ -1,3 +1,4 @@
+from ctypes import alignment
 import os
 import subprocess
 import time
@@ -66,7 +67,7 @@ def get_expected_output(expected_output_file):
 def evaluate_user(user_folder):
     """Evaluate the user's code for all questions."""
     user_results = {}
-    print(user_folder)
+    print("Checking code for:", user_folder)
     user_path = os.path.join(submissions_path, user_folder)
 
     for question in sorted(os.listdir(questions_path)):
@@ -76,47 +77,51 @@ def evaluate_user(user_folder):
         total_cases = len(test_cases)
         failed_cases = []
 
+        # Derive the code file based on user folder and question
+        nameAsList = user_folder.lower().split("_")
+        try:
+            nameOfFile = (
+                nameAsList[0][0] + "_" + nameAsList[1][0] + "_" + question[-1] + ".cpp"
+            )
+        except IndexError as e:
+            print(f"Error: {e}")
+            print(f"nameAsList: {nameAsList}, Skipping this user.")
+            return None
+        # if nameOfFile[0] == "m":
+        #     continue
+        code_file = os.path.join(user_path, nameOfFile)
+
+        if not os.path.exists(code_file):
+            # print("File", nameOfFile, "not found.")
+            user_results[question] = {
+                "passed": passed_cases,
+                "total": total_cases,
+                "failed_cases": "File Not Present",
+            }
+            continue
+
         for i, (input_file, expected_output_file) in enumerate(test_cases):
-            # Derive the code file based on user folder and question
-            nameAsList = user_folder.lower().split("_")
-            try:
-                nameOfFile = (
-                    nameAsList[0][0]
-                    + "_"
-                    + nameAsList[1][0]
-                    + "_"
-                    + question[-1]
-                    + ".cpp"
+            current_output = run_code(code_file, input_file).strip()
+            expected_output = get_expected_output(expected_output_file)
+            # print(current_output, expected_output)
+
+            if (
+                not current_output.endswith("Error")
+                and current_output == expected_output
+            ):
+                passed_cases += 1
+            else:
+                # Record failed test case details
+                with open(input_file, "r") as f:
+                    input_data = f.read().strip()
+                failed_cases.append(
+                    {
+                        "test_case": i + 1,
+                        "input": input_data,
+                        "expected_output": expected_output,
+                        "current_output": current_output,
+                    }
                 )
-            except IndexError as e:
-                print(f"Error: {e}")
-                print(f"nameAsList: {nameAsList}, Skipping this user.")
-                return None
-            # if nameOfFile[0] == "m":
-            #     continue
-            code_file = os.path.join(user_path, nameOfFile)
-
-            if os.path.exists(code_file):
-                current_output = run_code(code_file, input_file).strip()
-                expected_output = get_expected_output(expected_output_file)
-
-                if (
-                    not current_output.endswith("Error")
-                    and current_output == expected_output
-                ):
-                    passed_cases += 1
-                else:
-                    # Record failed test case details
-                    with open(input_file, "r") as f:
-                        input_data = f.read().strip()
-                    failed_cases.append(
-                        {
-                            "test_case": i + 1,
-                            "input": input_data,
-                            "expected_output": expected_output,
-                            "current_output": current_output,
-                        }
-                    )
 
         user_results[question] = {
             "passed": passed_cases,
@@ -130,13 +135,17 @@ def evaluate_user(user_folder):
             f.write(
                 f"{question}: {result['passed']}/{result['total']} test cases passed.\n"
             )
+            # print(result["failed_cases"])
             if result["failed_cases"]:
-                f.write(f"Failed cases:\n")
-                for case in result["failed_cases"]:
-                    f.write(f"  Test Case {case['test_case']}:\n")
-                    f.write(f"    Input:           {case['input']}\n")
-                    f.write(f"    Expected Output: {case['expected_output']}\n")
-                    f.write(f"    Current Output:  {case['current_output']}\n\n")
+                if type(result["failed_cases"]) == str:
+                    f.write(f"File for this code not present.\n")
+                else:
+                    f.write(f"Failed cases:\n")
+                    for case in result["failed_cases"]:
+                        f.write(f"  Test Case {case['test_case']}:\n")
+                        f.write(f"    Input:           {case['input']}\n")
+                        f.write(f"    Expected Output: {case['expected_output']}\n")
+                        f.write(f"    Current Output:  {case['current_output']}\n\n")
     return user_results
 
 
@@ -178,10 +187,11 @@ def main():
     if not os.path.exists(results_path):
         os.makedirs(results_path)
 
-    # user_folder = "Rushi_Lukka_62"
-    # user_results = evaluate_user(user_folder)
-    # if user_results != None:
-    #     users_results[user_folder] = user_results
+    # temp_list = ["Sahil_Modhavadiya_53", "Sujal_Kareliya_06"]
+    # for user_folder in temp_list:
+    #     user_results = evaluate_user(user_folder)
+    #     if user_results != None:
+    #         users_results[user_folder] = user_results
 
     # Evaluate each user
     for user_folder in sorted(os.listdir(submissions_path)):
@@ -191,14 +201,15 @@ def main():
 
     # Generate Excel report
     generate_excel_report(users_results)
-    subprocess.run(["rm", "temp_executable"])
+    if os.path.exists("temp_executable"):
+        subprocess.run(["rm", "temp_executable"])
 
 
 def temp():
     # ques_list = os.listdir(questions_path)
     # headers = ["Name"] + ques_list + ["Total Marks"]
     # user_folder = "Darshan_Padia_65 "
-    print(sorted(os.listdir(submissions_path)))
+    print(type("1") == str)
     # user_path = os.path.join(submissions_path, user_folder)
     # nameAsList = user_folder.lower().split("_")
 
