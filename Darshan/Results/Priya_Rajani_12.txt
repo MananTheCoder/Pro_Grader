@@ -1,19 +1,9 @@
-Ques1: 0/3 test cases passed.
+Ques1: 2/3 test cases passed.
 Failed cases:
-  Test Case 1:
-    Input:           2
-    Expected Output: YES
-    Current Output:  NO
-
   Test Case 2:
     Input:           1
     Expected Output: NO
     Current Output:  YES
-
-  Test Case 3:
-    Input:           8
-    Expected Output: YES
-    Current Output:  NO
 
 Ques2: 0/3 test cases passed.
 Failed cases:
