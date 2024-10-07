@@ -1,4 +1,10 @@
-Ques1: 0/3 test cases passed.
+Ques1: 2/3 test cases passed.
+Failed cases:
+  Test Case 2:
+    Input:           1
+    Expected Output: NO
+    Current Output:  YES
+
 Ques2: 1/3 test cases passed.
 Failed cases:
   Test Case 1:
