@@ -8,7 +8,6 @@ base_path = "./"
 questions_path = os.path.join(base_path, "Questions")
 submissions_path = os.path.join(base_path, "Submissions")
 results_path = os.path.join(base_path, "Results")
-# Define marks for each question here. Adjust as necessary.
 marks_per_question = {
     "Ques1": 5,
     "Ques2": 3,
@@ -35,16 +34,16 @@ def get_test_cases(question_folder):
     return test_cases
 
 
-def compile_code(user_code):
+def compile_cpp(user_code):
     try:
         result = subprocess.run(["g++", user_code, "-o", "temp_executable"], capture_output=True)
         return result.returncode == 0
     except subprocess.SubprocessError as e:
-        print(f"Error compiling code '{user_code}': {e}")
+        print(f"Error compiling C++ code '{user_code}': {e}")
         return False
 
 
-def run_code(input_data):
+def run_cpp(input_data):
     try:
         result = subprocess.run(
             "./temp_executable",
@@ -58,8 +57,53 @@ def run_code(input_data):
         print("Error: Code execution timed out.")
         return None
     except subprocess.SubprocessError as e:
-        print(f"Error running code: {e}")
+        print(f"Error running C++ code: {e}")
         return None
+
+
+def compile_java(user_code, user_path):
+    try:
+        # Change to the user's directory before compiling
+        original_dir = os.getcwd()
+        os.chdir(user_path)
+        
+        result = subprocess.run(["javac", os.path.basename(user_code)], capture_output=True, text=True)
+        os.chdir(original_dir)
+        return result.returncode == 0
+    except subprocess.SubprocessError as e:
+        print(f"Error compiling Java code '{user_code}': {e}")
+        return False
+    finally:
+        # Ensure we return to the original directory
+        if 'original_dir' in locals():
+            os.chdir(original_dir)
+
+
+def run_java(class_name, input_data, user_path):
+    try:
+        # Change to the user's directory before running
+        original_dir = os.getcwd()
+        os.chdir(user_path)
+        
+        result = subprocess.run(
+            ["java", class_name],
+            input=input_data,
+            capture_output=True,
+            text=True,
+            timeout=1,
+        )
+        os.chdir(original_dir)
+        return result.stdout.strip() if result.returncode == 0 else None
+    except subprocess.TimeoutExpired:
+        print("Error: Code execution timed out.")
+        return None
+    except subprocess.SubprocessError as e:
+        print(f"Error running Java code: {e}")
+        return None
+    finally:
+        # Ensure we return to the original directory
+        if 'original_dir' in locals():
+            os.chdir(original_dir)
 
 
 def get_expected_output(expected_output_file):
@@ -85,35 +129,35 @@ def evaluate_user(user_folder):
         failed_cases = []
 
         questionNum = ''.join([i for i in question if i.isdigit()])
-        code_file = os.path.join(user_path, f"{user_folder[0].lower()}_{user_folder.split('_')[1][0].lower()}_{questionNum}.cpp")
-
-        if os.path.exists(code_file) and compile_code(code_file):
+        cpp_file = os.path.join(user_path, f"{user_folder[0].lower()}_{user_folder.split('_')[1][0].lower()}_{questionNum}.cpp")
+        java_file = os.path.join(user_path, f"{user_folder[0].lower()}_{user_folder.split('_')[1][0].lower()}_{questionNum}.java")
+        
+        if os.path.exists(cpp_file) and compile_cpp(cpp_file):
             for i, (input_file, expected_output_file) in enumerate(test_cases):
-                try:
+                with open(input_file, "r") as infile:
+                    input_data = infile.read().strip()
+                current_output = run_cpp(input_data)
+                if current_output is not None:
+                    expected_output = get_expected_output(expected_output_file)
+                    if current_output == expected_output:
+                        passed_cases += 1
+                    else:
+                        failed_cases.append({"test_case": i + 1, "input": input_data, "expected_output": expected_output, "current_output": current_output})
+        elif os.path.exists(java_file):
+            class_name = os.path.splitext(os.path.basename(java_file))[0]
+            if compile_java(java_file, user_path):
+                for i, (input_file, expected_output_file) in enumerate(test_cases):
                     with open(input_file, "r") as infile:
                         input_data = infile.read().strip()
-                    current_output = run_code(input_data)
-                    if current_output:
+                    current_output = run_java(class_name, input_data, user_path)
+                    if current_output is not None:
                         expected_output = get_expected_output(expected_output_file)
                         if current_output == expected_output:
                             passed_cases += 1
                         else:
-                            failed_cases.append({
-                                "test_case": i + 1,
-                                "input": input_data,
-                                "expected_output": expected_output,
-                                "current_output": current_output,
-                            })
-                except FileNotFoundError:
-                    print(f"Error: Input file '{input_file}' not found.")
-                except Exception as e:
-                    print(f"Error during test case evaluation: {e}")
+                            failed_cases.append({"test_case": i + 1, "input": input_data, "expected_output": expected_output, "current_output": current_output})
 
-        user_results[question] = {
-            "passed": passed_cases,
-            "total": total_cases,
-            "failed_cases": failed_cases,
-        }
+        user_results[question] = {"passed": passed_cases, "total": total_cases, "failed_cases": failed_cases}
 
     try:
         with open(os.path.join(results_path, f"{user_folder}.txt"), "w") as f:
@@ -138,7 +182,7 @@ def generate_excel_report(users_results):
     sheet.title = "Test Results"
 
     try:
-        ques_list = os.listdir(questions_path)
+        ques_list = sorted(os.listdir(questions_path))
         headers = ["Name"] + ques_list + ["Total Marks"]
         sheet.append(headers)
 
@@ -152,7 +196,7 @@ def generate_excel_report(users_results):
                 score = (passed / total) * question_marks if total else 0
                 row_data.append(f"{(passed / total) * 100:.1f}%" if total else "0%")
                 total_marks += score
-            row_data.append(total_marks)
+            row_data.append(f"{total_marks:.1f}")
             sheet.append(row_data)
 
         workbook.save(os.path.join(results_path, "test_results.xlsx"))
@@ -162,6 +206,23 @@ def generate_excel_report(users_results):
         print(f"Error generating Excel report: {e}")
 
 
+def clean_up():
+    # Clean up compiled files
+    for user_folder in os.listdir(submissions_path):
+        user_path = os.path.join(submissions_path, user_folder)
+        try:
+            # Remove C++ executable
+            if os.path.exists("temp_executable"):
+                os.remove("temp_executable")
+            
+            # Remove Java class files
+            for file in os.listdir(user_path):
+                if file.endswith(".class"):
+                    os.remove(os.path.join(user_path, file))
+        except Exception as e:
+            print(f"Error cleaning up files: {e}")
+
+
 def main():
     users_results = {}
     try:
@@ -169,11 +230,12 @@ def main():
             os.makedirs(results_path)
 
         for user_folder in sorted(os.listdir(submissions_path)):
+            print(f"Evaluating {user_folder}...")
             user_results = evaluate_user(user_folder)
             users_results[user_folder] = user_results
 
         generate_excel_report(users_results)
-        subprocess.run(["rm", "temp_executable"])
+        clean_up()
     except Exception as e:
         print(f"Error in main execution: {e}")
 

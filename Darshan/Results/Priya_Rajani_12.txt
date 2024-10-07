@@ -32,20 +32,4 @@ Failed cases:
     Expected Output: NO
     Current Output:  YES
 
-Ques3: 0/3 test cases passed.
-Failed cases:
-  Test Case 1:
-    Input:           4
-    Expected Output: 24
-    Current Output:  0
-
-  Test Case 2:
-    Input:           2
-    Expected Output: 2
-    Current Output:  0
-
-  Test Case 3:
-    Input:           5
-    Expected Output: 120
-    Current Output:  0
-
+Ques3: 3/3 test cases passed.
