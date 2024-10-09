@@ -120,7 +120,7 @@ def get_expected_output(expected_output_file):
 
 def evaluate_user(user_folder, preloaded_test_cases):
     user_results = {}
-    print(user_folder)
+    # print(user_folder)
     user_path = os.path.join(submissions_path, user_folder)
 
     for question, test_cases in preloaded_test_cases.items():
@@ -183,9 +183,9 @@ def evaluate_user(user_folder, preloaded_test_cases):
                     f.write(
                         f"{question}: {result['passed']}/{result['total']} test cases passed.\n"
                     )
-                    print(passed_cases, len(failed_cases))
+                    # print(passed_cases, len(failed_cases))
                     if result["passed"] == 0 and len(result["failed_cases"]) == 0:
-                        print("No file found for this question.")
+                        # print("No file found for this question.")
                         f.write("No file found for this question.\n\n")
                     if result["failed_cases"]:
                         f.write("Failed cases:\n")
@@ -265,7 +265,7 @@ def main():
                 for in_file, out_file in test_cases
             ]
 
-        print("preloaded testcase ", preloaded_test_cases)
+        # print("preloaded testcase ", preloaded_test_cases)
 
         for user_folder in sorted(os.listdir(submissions_path)):
             print(f"Evaluating {user_folder}...")
