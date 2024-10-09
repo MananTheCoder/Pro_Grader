@@ -14,11 +14,8 @@ marks_per_question = {
     "Ques3": 4,
 }
 
-green_fill = PatternFill(start_color="00FF00", end_color="00FF00", fill_type="solid")
-red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
 
-
-def get_test_cases(question_folder):
+def get_test_cases(question_folder):  # returns the path to test cases
     test_cases = []
     try:
         for filename in sorted(os.listdir(question_folder)):
@@ -121,14 +118,12 @@ def get_expected_output(expected_output_file):
     return ""
 
 
-def evaluate_user(user_folder):
+def evaluate_user(user_folder, preloaded_test_cases):
     user_results = {}
     print(user_folder)
     user_path = os.path.join(submissions_path, user_folder)
 
-    for question in sorted(os.listdir(questions_path)):
-        question_path = os.path.join(questions_path, question)
-        test_cases = get_test_cases(question_path)
+    for question, test_cases in preloaded_test_cases.items():
         passed_cases = 0
         total_cases = len(test_cases)
         failed_cases = []
@@ -143,13 +138,28 @@ def evaluate_user(user_folder):
             f"{user_folder[0].lower()}_{user_folder.split('_')[1][0].lower()}_{questionNum}.java",
         )
 
+        # Evaluate C++ files
         if os.path.exists(cpp_file) and compile_cpp(cpp_file):
-            for i, (input_file, expected_output_file) in enumerate(test_cases):
-                with open(input_file, "r") as infile:
-                    input_data = infile.read().strip()
+            for i, (input_data, expected_output) in enumerate(test_cases):
                 current_output = run_cpp(input_data)
-                if current_output is not None:
-                    expected_output = get_expected_output(expected_output_file)
+                if current_output == expected_output:
+                    passed_cases += 1
+                else:
+                    failed_cases.append(
+                        {
+                            "test_case": i + 1,
+                            "input": input_data,
+                            "expected_output": expected_output,
+                            "current_output": current_output,
+                        }
+                    )
+
+        # Evaluate Java files
+        elif os.path.exists(java_file):
+            class_name = os.path.splitext(os.path.basename(java_file))[0]
+            if compile_java(java_file, user_path):
+                for i, (input_data, expected_output) in enumerate(test_cases):
+                    current_output = run_java(class_name, input_data, user_path)
                     if current_output == expected_output:
                         passed_cases += 1
                     else:
@@ -161,49 +171,33 @@ def evaluate_user(user_folder):
                                 "current_output": current_output,
                             }
                         )
-        elif os.path.exists(java_file):
-            class_name = os.path.splitext(os.path.basename(java_file))[0]
-            if compile_java(java_file, user_path):
-                for i, (input_file, expected_output_file) in enumerate(test_cases):
-                    with open(input_file, "r") as infile:
-                        input_data = infile.read().strip()
-                    current_output = run_java(class_name, input_data, user_path)
-                    if current_output is not None:
-                        expected_output = get_expected_output(expected_output_file)
-                        if current_output == expected_output:
-                            passed_cases += 1
-                        else:
-                            failed_cases.append(
-                                {
-                                    "test_case": i + 1,
-                                    "input": input_data,
-                                    "expected_output": expected_output,
-                                    "current_output": current_output,
-                                }
-                            )
 
         user_results[question] = {
             "passed": passed_cases,
             "total": total_cases,
             "failed_cases": failed_cases,
         }
-
-    try:
-        with open(os.path.join(results_path, f"{user_folder}.txt"), "w") as f:
-            for question, result in user_results.items():
-                f.write(
-                    f"{question}: {result['passed']}/{result['total']} test cases passed.\n"
-                )
-                if result["failed_cases"]:
-                    f.write("Failed cases:\n")
-                    for case in result["failed_cases"]:
-                        f.write(f"  Test Case {case['test_case']}:\n")
-                        f.write(f"    Input:           {case['input']}\n")
-                        f.write(f"    Expected Output: {case['expected_output']}\n")
-                        f.write(f"    Current Output:  {case['current_output']}\n\n")
-    except Exception as e:
-        print(f"Error writing results file: {e}")
-
+        try:
+            with open(os.path.join(results_path, f"{user_folder}.txt"), "w") as f:
+                for question, result in user_results.items():
+                    f.write(
+                        f"{question}: {result['passed']}/{result['total']} test cases passed.\n"
+                    )
+                    print(passed_cases, len(failed_cases))
+                    if result["passed"] == 0 and len(result["failed_cases"]) == 0:
+                        print("No file found for this question.")
+                        f.write("No file found for this question.\n\n")
+                    if result["failed_cases"]:
+                        f.write("Failed cases:\n")
+                        for case in result["failed_cases"]:
+                            f.write(f"Test Case {case['test_case']}:\n")
+                            f.write(f"Input:           \n{case['input']}\n\n")
+                            f.write(f"Expected Output: \n{case['expected_output']}\n\n")
+                            f.write(
+                                f"Current Output:  \n{case['current_output']}\n-----------------\n"
+                            )
+        except Exception as e:
+            print(f"Error writing results file: {e}")
     return user_results
 
 
@@ -260,9 +254,22 @@ def main():
         if not os.path.exists(results_path):
             os.makedirs(results_path)
 
+        preloaded_test_cases = {}
+        for question in sorted(os.listdir(questions_path)):
+            question_path = os.path.join(questions_path, question)
+            test_cases = get_test_cases(question_path)
+
+            # Preload test cases as (input_data, expected_output) pairs
+            preloaded_test_cases[question] = [
+                (open(in_file).read().strip(), get_expected_output(out_file))
+                for in_file, out_file in test_cases
+            ]
+
+        print("preloaded testcase ", preloaded_test_cases)
+
         for user_folder in sorted(os.listdir(submissions_path)):
             print(f"Evaluating {user_folder}...")
-            user_results = evaluate_user(user_folder)
+            user_results = evaluate_user(user_folder, preloaded_test_cases)
             users_results[user_folder] = user_results
 
         generate_excel_report(users_results)
@@ -275,3 +282,5 @@ if __name__ == "__main__":
     start = time.time()
     main()
     print(f"Execution Time: {time.time() - start:.2f} seconds")
+
+# ma
