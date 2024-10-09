@@ -154,6 +154,10 @@ def evaluate_user(user_folder, preloaded_test_cases):
             with open(os.path.join(results_path, f"{user_folder}.txt"), "w") as f:
                 for question, result in user_results.items():
                     f.write(f"{question}: {result['passed']}/{result['total']} test cases passed.\n")
+                    print(passed_cases,len(failed_cases))
+                    if result["passed"] == 0 and len(result["failed_cases"]) == 0:
+                        print("No file found for this question.")
+                        f.write("No file found for this question.\n\n")
                     if result["failed_cases"]:
                         f.write("Failed cases:\n")
                         for case in result["failed_cases"]:
