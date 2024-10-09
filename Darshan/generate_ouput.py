@@ -8,10 +8,12 @@ questions_path = "Questions" # path to the folder where input testcases are stor
 '''
 Question
     -Ques1
+        -correct.cpp
         -1.in
         -2.in
         ...
     -Ques2
+        -correct.cpp
         -1.in
         -2.in
         ...
