@@ -9,9 +9,17 @@ questions_path = os.path.join(base_path, "Questions")
 submissions_path = os.path.join(base_path, "Submissions")
 results_path = os.path.join(base_path, "Results")
 marks_per_question = {
-    "Ques1": 5,
-    "Ques2": 3,
-    "Ques3": 4,
+    "Ques1": 15,
+    "Ques2": 5,
+    "Ques3": 10,
+    "Ques4": 10,
+    "Ques5": 5,
+    "Ques6": 10,
+    "Ques7": 15,
+    "Ques8": 15,
+    "Ques9": 5,
+    "Ques10": 10,
+    "Ques11": 5,
 }
 
 
@@ -120,8 +128,9 @@ def get_expected_output(expected_output_file):
 
 def evaluate_user(user_folder, preloaded_test_cases):
     user_results = {}
-    # print(user_folder)
     user_path = os.path.join(submissions_path, user_folder)
+    total_marks_obtained = 0
+    total_marks_possible = 0
 
     for question, test_cases in preloaded_test_cases.items():
         passed_cases = 0
@@ -172,20 +181,32 @@ def evaluate_user(user_folder, preloaded_test_cases):
                             }
                         )
 
+        # Calculate marks
+        question_marks = marks_per_question.get(question, 0)
+        score = (passed_cases / total_cases) * question_marks if total_cases else 0
+
+        # Update total marks
+        total_marks_obtained += score
+        total_marks_possible += question_marks
+
+        # Print results for this question
+        print(f"Question: {question}")
+        print(f"Passed: {passed_cases}/{total_cases} | Marks: {score:.1f}/{question_marks} | Percentage: {(passed_cases / total_cases) * 100:.1f}%" if total_cases else "0%")
+
         user_results[question] = {
             "passed": passed_cases,
             "total": total_cases,
             "failed_cases": failed_cases,
+            "score": score
         }
+
         try:
             with open(os.path.join(results_path, f"{user_folder}.txt"), "w") as f:
                 for question, result in user_results.items():
                     f.write(
                         f"{question}: {result['passed']}/{result['total']} test cases passed.\n"
                     )
-                    # print(passed_cases, len(failed_cases))
                     if result["passed"] == 0 and len(result["failed_cases"]) == 0:
-                        # print("No file found for this question.")
                         f.write("No file found for this question.\n\n")
                     if result["failed_cases"]:
                         f.write("Failed cases:\n")
@@ -198,8 +219,14 @@ def evaluate_user(user_folder, preloaded_test_cases):
                             )
         except Exception as e:
             print(f"Error writing results file: {e}")
-    return user_results
 
+    # Print two new lines after completing user evaluation
+    print("\n\n")
+    
+    # Print total marks obtained and possible
+    print(f"Total Marks Obtained: {total_marks_obtained:.1f} / {total_marks_possible:.1f}")
+
+    return user_results
 
 def generate_excel_report(users_results):
     workbook = openpyxl.Workbook()

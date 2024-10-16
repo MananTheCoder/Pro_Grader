@@ -1,8 +1,54 @@
-Ques1: 0/3 test cases passed.
+Ques1: 0/10 test cases passed.
 No file found for this question.
 
-Ques2: 3/3 test cases passed.
-Ques3: 3/3 test cases passed.
-Ques4: 0/3 test cases passed.
+Ques10: 0/10 test cases passed.
+No file found for this question.
+
+Ques11: 0/10 test cases passed.
+No file found for this question.
+
+Ques2: 0/15 test cases passed.
+No file found for this question.
+
+Ques3: 0/10 test cases passed.
+No file found for this question.
+
+Ques4: 0/10 test cases passed.
+No file found for this question.
+
+Ques5: 8/10 test cases passed.
+Failed cases:
+Test Case 6:
+Input:           
+6
+1 2 3 4 3 2
+
+Expected Output: 
+0
+
+Current Output:  
+1
+-----------------
+Test Case 10:
+Input:           
+3
+1 2 1
+
+Expected Output: 
+0
+
+Current Output:  
+1
+-----------------
+Ques6: 0/10 test cases passed.
+No file found for this question.
+
+Ques7: 0/9 test cases passed.
+No file found for this question.
+
+Ques8: 0/10 test cases passed.
+No file found for this question.
+
+Ques9: 0/10 test cases passed.
 No file found for this question.
 
