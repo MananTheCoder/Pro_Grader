@@ -1,1 +1,0 @@
-Test Case: ('1', '2'), Expected: 3, Actual Output: 3, Execution Time: 0.20788168907165527 seconds, Result: Pass
